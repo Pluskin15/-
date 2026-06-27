@@ -54,3 +54,17 @@ def test_filter_tasks_active_and_completed():
     ]
     assert [task.title for task in filter_tasks(tasks, "2")] == ["active"]
     assert [task.title for task in filter_tasks(tasks, "3")] == ["done"]
+
+
+def test_task_from_dict_restores_completion_status():
+    task = Task.from_dict(
+        {
+            "title": "saved",
+            "description": "from json",
+            "due_date": future_date(2),
+            "priority": "средний",
+            "completed": True,
+        }
+    )
+    assert task.completed is True
+    assert task.title == "saved"
