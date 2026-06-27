@@ -1,6 +1,10 @@
 from datetime import date, timedelta
+from pathlib import Path
+
 import web_todo
 from todo import Task, load_tasks, save_tasks
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def future_date(days: int) -> str:
@@ -21,3 +25,13 @@ def test_render_app_contains_browser_controls(monkeypatch, tmp_path):
     assert "Активные" in html
     assert "Встреча" in html
     assert "Удалить" in html
+
+
+def test_standalone_html_app_opens_without_python_server():
+    html = (PROJECT_ROOT / "todo_app.html").read_text(encoding="utf-8")
+
+    assert "откройте этот HTML-файл" in html
+    assert "localStorage" in html
+    assert "Экспорт JSON" in html
+    assert "Импорт JSON" in html
+    assert "python3" not in html.lower()
