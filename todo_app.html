@@ -60,12 +60,25 @@
       line-height: 1;
     }
 
-    .hero p {
-      max-width: 780px;
+    .hero-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .stat-card {
+      background: rgba(255, 250, 243, 0.82);
+      border: 1px solid rgba(234, 222, 212, 0.9);
+      border-radius: 999px;
+      box-shadow: 0 10px 24px rgba(105, 89, 74, 0.08);
       color: var(--muted);
-      font-size: 1.05rem;
-      line-height: 1.6;
-      margin: 0;
+      font-weight: 800;
+      padding: 10px 14px;
+    }
+
+    .stat-card strong {
+      color: var(--text);
+      font-size: 1.08rem;
     }
 
     .grid {
@@ -238,9 +251,13 @@
 <body>
   <main class="page">
     <section class="hero">
-      <div class="eyebrow">открывается как обычный файл</div>
-      <h1>Спокойный список дел</h1>
-      <p>Это отдельное локальное приложение: откройте этот HTML-файл двойным кликом или через ссылку в README. Ничего запускать в Python не нужно. Задачи сохраняются в памяти браузера, а для файла можно использовать экспорт и импорт JSON.</p>
+      <div class="eyebrow" id="current-date">Сегодня</div>
+      <h1>Список дел</h1>
+      <div class="hero-stats" aria-label="Статистика задач">
+        <span class="stat-card"><strong id="total-count">0</strong> всего</span>
+        <span class="stat-card"><strong id="active-count">0</strong> активных</span>
+        <span class="stat-card"><strong id="completed-count">0</strong> выполненных</span>
+      </div>
     </section>
 
     <div id="message" class="message success" role="status"></div>
@@ -287,6 +304,7 @@
           <div class="data-actions">
             <button class="secondary" id="export-json" type="button">Экспорт JSON</button>
             <button class="secondary" id="import-json" type="button">Импорт JSON</button>
+            <button class="danger" id="clear-completed" type="button">Очистить выполненные</button>
             <input class="hidden-file" id="import-file" type="file" accept="application/json,.json">
           </div>
           <p class="hint">Данные автоматически сохраняются в localStorage браузера.</p>
@@ -309,10 +327,15 @@
     const list = document.querySelector("#task-list");
     const message = document.querySelector("#message");
     const dueDateInput = document.querySelector("#due-date");
+    const currentDate = document.querySelector("#current-date");
+    const totalCount = document.querySelector("#total-count");
+    const activeCount = document.querySelector("#active-count");
+    const completedCount = document.querySelector("#completed-count");
     const searchForm = document.querySelector("#search-form");
     const searchInput = document.querySelector("#search");
     const importInput = document.querySelector("#import-file");
 
+    currentDate.textContent = `Сегодня: ${formatLongDate(new Date())}`;
     dueDateInput.value = formatDate(new Date());
     renderTasks();
 
@@ -360,6 +383,19 @@
       link.click();
       URL.revokeObjectURL(link.href);
       showMessage("Файл tasks.json подготовлен к скачиванию.");
+    });
+
+    document.querySelector("#clear-completed").addEventListener("click", () => {
+      const completedAmount = tasks.filter((task) => task.completed).length;
+      if (!completedAmount) {
+        showMessage("Выполненных задач пока нет.");
+        return;
+      }
+      if (!confirm(`Удалить выполненные задачи: ${completedAmount}?`)) return;
+      tasks = tasks.filter((task) => !task.completed);
+      saveTasks();
+      showMessage("Выполненные задачи удалены.");
+      renderTasks();
     });
 
     document.querySelector("#import-json").addEventListener("click", () => importInput.click());
@@ -450,7 +486,18 @@
       return [String(value.getDate()).padStart(2, "0"), String(value.getMonth() + 1).padStart(2, "0"), value.getFullYear()].join(".");
     }
 
+    function formatLongDate(value) {
+      return value.toLocaleDateString("ru-RU", {day: "numeric", month: "long", year: "numeric"});
+    }
+
+    function updateDashboard() {
+      totalCount.textContent = tasks.length;
+      activeCount.textContent = tasks.filter((task) => !task.completed).length;
+      completedCount.textContent = tasks.filter((task) => task.completed).length;
+    }
+
     function renderTasks() {
+      updateDashboard();
       const visible = tasks
         .map((task, index) => ({task, index}))
         .filter(({task}) => currentFilter === "all" || (currentFilter === "active" && !task.completed) || (currentFilter === "completed" && task.completed))

@@ -30,8 +30,13 @@ def test_render_app_contains_browser_controls(monkeypatch, tmp_path):
 def test_standalone_html_app_opens_without_python_server():
     html = (PROJECT_ROOT / "todo_app.html").read_text(encoding="utf-8")
 
-    assert "откройте этот HTML-файл" in html
+    assert "<h1>Список дел</h1>" in html
+    assert "current-date" in html
+    assert "total-count" in html
     assert "localStorage" in html
     assert "Экспорт JSON" in html
     assert "Импорт JSON" in html
+    assert "Очистить выполненные" in html
+    assert "откройте этот HTML-файл" not in html
+    assert "Ничего запускать в Python" not in html
     assert "python3" not in html.lower()
